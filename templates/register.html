@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Реєстрація користувача</title>
+</head>
+<body>
+  <h1><a href="/login">Увійдіть</a> або зареєструйтеся для перегляду стоінки</h1>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" style="font-weight: bold;">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<form method="POST" action="/register" class="register-form">
+    <p>Реєстрація</p>
+    {{ register_form.username.label }} {{ register_form.username(class="register-input") }}
+    {{ register_form.email.label }} {{ register_form.email(class="register-input") }}
+    {{ register_form.password.label }} {{ register_form.password(class="register-input") }}
+    {{ register_form.confirm.label }} {{ register_form.confirm(class="register-input") }}
+    <input type="submit" value="Register" class="register-button">
+</form>
+
+
+
+</body>
+</html>
