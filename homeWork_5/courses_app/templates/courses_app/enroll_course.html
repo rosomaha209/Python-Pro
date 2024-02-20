@@ -1,0 +1,25 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Enroll Course</title>
+</head>
+<body>
+    <h1>Enroll Course</h1>
+<form method="post" action="{% url 'enroll_course' %}">
+  {% csrf_token %}
+  {{ course_form }}
+  <button type="submit">Enroll</button>
+</form>
+
+    <hr>
+    <h2>All Courses</h2>
+    <ul>
+        {% for course in courses %}
+            <li>{{ course.title }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

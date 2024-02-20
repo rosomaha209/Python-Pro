@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Courses</title>
+</head>
+<body>
+<p>Вітаю на сторінці курсів</p>
+    <h1>{{ message }}</h1>
+{% if courses %}
+    <h1>All Courses</h1>
+        <ul>
+            {% for course in courses %}
+                <li>{{ course }}</li>
+            {% endfor %}
+        </ul>
+{% endif %}
+</body>
+</html>

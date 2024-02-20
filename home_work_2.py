@@ -175,3 +175,8 @@ def even_number_list(list_num):
     - list: Cписок, що містить тільки парні числа.
     """
     return [num for num in list_num if num % 2 == 0]
+
+
+text = ' Hello world '  # : -Вирівнювання та заповнення . - символ яким заповнити
+print(f'{text:~^100}')  # <^> -сторона вирівнювання 100 - фіксована довжина рядка
+

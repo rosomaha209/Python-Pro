@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+</head>
+<body>
+
+<form method="post" action="{% url 'login_page' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Send data</button>
+</form>
+
+</body>
+</html>
