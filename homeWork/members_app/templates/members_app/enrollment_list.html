@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Enrollment List</h1>
+<ul>
+{% for enrollment in enrollments %}
+    <li>
+        {{ enrollment.course }}
+        <form action="{% url 'enrollment_delete' enrollment.id %}" method="post">
+            {% csrf_token %}
+            <button type="submit">Delete</button>
+        </form>
+    </li>
+{% endfor %}
+</ul>
+{% endblock %}

@@ -1,5 +1,7 @@
 from datetime import date
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect, render
+from django.views import View
 from django.views.generic import CreateView, FormView
 
 from .my_forms import UserForm, EnrollmentForm
@@ -7,10 +9,7 @@ from .models import UserEnrollment
 from django.contrib.auth import authenticate, login
 
 
-
-
 class UserInputView(FormView):
-
     form_class = UserForm
     template_name = 'members_app/user_input.html'
     success_url = '/members/output/'
@@ -42,7 +41,7 @@ class UserSessionView(LoginRequiredMixin, FormView):
         context = super().get_context_data(**kwargs)
         context['user'] = self.request.user
         enrollments = UserEnrollment.objects.filter(user=self.request.user)
-        context['enrollments'] = enrollments if enrollments.exists() else None
+        context['enrollments'] = enrollments
         return context
 
 
@@ -54,5 +53,19 @@ class EnrollmentCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        form.instance.date_enrolled = date.today()
+        form.instance.enrollment_date = date.today()
         return super().form_valid(form)
+
+
+class EnrollmentListView(View):
+    def get(self, request, *args, **kwargs):
+        enrollments = UserEnrollment.objects.filter(user=request.user)
+        return render(request, 'members_app/enrollment_list.html', {'enrollments': enrollments})
+
+class EnrollmentDeleteView(View):
+    def post(self, request, *args, **kwargs):
+        enrollment_id = self.kwargs.get('enrollment_id')
+        enrollment = UserEnrollment.objects.get(pk=enrollment_id)
+        if enrollment.user == request.user:
+            enrollment.delete()
+        return redirect('enrollment_list')  # Перенаправлення на список енролментів після видаленняedirect('members_app:user_session')

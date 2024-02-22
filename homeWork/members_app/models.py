@@ -9,7 +9,7 @@ from courses_app.models import Courses
 class UserEnrollment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     course = models.ForeignKey(Courses, on_delete=models.CASCADE)
-    date_enrolled = models.DateField()
+    enrollment_date = models.DateField(default=date.today())  # Забезпечуємо значення за замовчуванням
 
     def __str__(self):
-        return f'{self.user.username} enrolled in {self.course.title} on {self.date_enrolled}'
+        return f'{self.user.username} enrolled in {self.course.title} on {self.enrollment_date}'

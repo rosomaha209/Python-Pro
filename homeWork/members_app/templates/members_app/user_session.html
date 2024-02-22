@@ -9,13 +9,14 @@
 <ul>
 {% if enrollments %}
     {% for enrollment in enrollments %}
-        <li>{{ enrollment.course.title }} on {{ enrollment.date_enrolled }}</li>
+        <li>{{ enrollment.course.title }} on {{ enrollment.enrollment_date }}</li>
     {% endfor %}
 {% else %}
     <p>No enrollments found</p>
 {% endif %}
 </ul>
 <a href="{% url 'enrollment_create' %}">Enroll in a new course</a>
+<a href="{% url 'enrollment_list' %}"> Withdraw course</a>
 {% else %}
 <p>You are not logged in.</p>
 {% endif %}
