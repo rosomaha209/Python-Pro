@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<h1>Courses</h1>
+{% if user.is_authenticated %}
+<p>This is the Courses page.</p>
+<ul>
+{% for course in courses %}
+<li>{{ course.title }}</li>
+{% endfor %}
+</ul>
+<a href="{% url 'course_create' %}">Add a new course</a>
+{% else %}
+<p>You have no permissions to view this page.</p>
+{% endif %}
+{% endblock %}

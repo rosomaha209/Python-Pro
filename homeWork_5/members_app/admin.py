@@ -1,4 +1,4 @@
 from django.contrib import admin
-from .views import Member
+from .models import UserEnrollment
 
-admin.site.register(Member)
+admin.site.register(UserEnrollment)

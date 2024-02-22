@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Заголовок сторінки{% endblock %}</title>
+    <!-- Підключіть ваші CSS файли та інші мета-теги тут -->
+</head>
+<body>
+
+<header>
+    <!-- Навігаційне меню, логотип, заголовок і т.д. -->
+</header>
+
+<main>
+    {% block content %}
+    <!-- Основний вміст сторінки буде замінений у дочірніх шаблонах -->
+    {% endblock %}
+</main>
+
+<footer>
+    <!-- Футер, контактна інформація, посилання і т.д. -->
+</footer>
+
+<!-- Підключіть ваші JavaScript файли та інші скрипти тут -->
+
+</body>
+</html>

@@ -1,9 +1,12 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
-class Course(models.Model):
+class Courses(models.Model):
     title = models.CharField(max_length=100)
-    enrolled_users = models.ManyToManyField('auth.User', through='members_app.UserEnrollment')  # Використовуємо зворотнє посилання
+    users = models.ManyToManyField(User, through='members_app.UserEnrollment')
 
     def __str__(self):
         return self.title
+
+

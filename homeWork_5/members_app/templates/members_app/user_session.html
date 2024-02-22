@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<h1>User session</h1>
+{% if user.is_authenticated %}
+<p>Welcome, {{ user.username }}.</p>
+<p>You are enrolled in the following courses:</p>
+<ul>
+{% if enrollments %}
+    {% for enrollment in enrollments %}
+        <li>{{ enrollment.course.title }} on {{ enrollment.date_enrolled }}</li>
+    {% endfor %}
+{% else %}
+    <p>No enrollments found</p>
+{% endif %}
+</ul>
+<a href="{% url 'enrollment_create' %}">Enroll in a new course</a>
+{% else %}
+<p>You are not logged in.</p>
+{% endif %}
+{% endblock %}

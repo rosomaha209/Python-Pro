@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<h1>User output</h1>
+<p>Username: {{ user.username }}</p>
+<p>Password: {{ user.password }}</p>
+<a href="{% url 'user_session' %}">Go to session page</a>
+{% endblock %}
