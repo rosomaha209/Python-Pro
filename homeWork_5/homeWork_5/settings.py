@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'courses_app',
     'members_app',
+    'logistration',
 
 ]
 
