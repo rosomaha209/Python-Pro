@@ -132,5 +132,5 @@ LOGOUT_URL = 'logout'
 
 DEFAULT_CHARSET = 'utf-8'
 
-AUTH_USER_MODEL = 'custom_user_app.User'
+AUTH_USER_MODEL = 'custom_user_app.CustomUser'
 
