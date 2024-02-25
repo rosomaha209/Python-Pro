@@ -1,2 +1,13 @@
 /Lib/
 /Scripts/
+*.pyc
+*.iml
+.idea/vcs.xml
+.idea/vcs.xml
+.idea/inspectionProfiles/profiles_settings.xml
+*.xml
+Scripts/activate.bat
+*.xml
+Scripts/activate.bat
+*.xml
+Scripts/deactivate.bat
