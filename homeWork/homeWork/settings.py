@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'courses_app',
     'members_app',
     'logistration',
+    'custom_user_app',
 
 ]
 
@@ -78,7 +79,7 @@ WSGI_APPLICATION = 'homeWork.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
+        'NAME': 'newdatabase',
         'USER': 'postgres',
         'PASSWORD': '12345',
         'HOST': 'localhost',
@@ -130,3 +131,6 @@ LOGIN_URL = 'login'
 LOGOUT_URL = 'logout'
 
 DEFAULT_CHARSET = 'utf-8'
+
+AUTH_USER_MODEL = 'custom_user_app.User'
+

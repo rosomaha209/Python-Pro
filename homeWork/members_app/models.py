@@ -1,15 +1,13 @@
-from datetime import date
-
-from django.contrib.auth.models import User
-from django.db import models
-
 from courses_app.models import Courses
+from django.contrib.auth import get_user_model
+from django.db import models
+from django.utils import timezone
 
 
 class UserEnrollment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     course = models.ForeignKey(Courses, on_delete=models.CASCADE)
-    enrollment_date = models.DateField(default=date.today())  # Забезпечуємо значення за замовчуванням
+    enrollment_date = models.DateField(default=timezone.now)
 
     def __str__(self):
         return f'{self.user.username} enrolled in {self.course.title} on {self.enrollment_date}'
