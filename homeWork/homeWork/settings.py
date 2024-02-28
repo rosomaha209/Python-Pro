@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'members_app',
     'logistration',
     'custom_user_app',
+    'permission_app',
 
 ]
 

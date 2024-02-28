@@ -17,9 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('courses/', include('courses_app.urls')),
     path('members/', include('members_app.urls')),
     path('logistration/', include('logistration.urls')),
+    path('grant-permission/', include('permission_app.urls')),
 ]
