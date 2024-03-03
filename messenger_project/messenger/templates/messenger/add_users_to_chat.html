@@ -1,0 +1,16 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Users to Chat</title>
+</head>
+<body>
+    <h1>Add Users to Chat</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ users_form.as_p }}
+        <button type="submit">Add Users</button>
+    </form>
+</body>
+</html>

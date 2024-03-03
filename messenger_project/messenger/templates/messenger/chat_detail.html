@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Detail</title>
+    <style>
+        li {
+            list-style-type: none;
+        }
+        .timestamp {
+            color: gray;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ chat.name }}</h1>
+    <ul>
+        {% for message in messages %}
+            <li>
+                <strong>{{ message.author.username }}</strong>: {{ message.content }}
+                <span class="timestamp">({{ message.timestamp }})</span>
+            </li>
+        {% endfor %}
+    </ul>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Send</button>
+    </form>
+</body>
+</html>
