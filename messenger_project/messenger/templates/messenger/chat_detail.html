@@ -2,31 +2,37 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Chat Detail</title>
-    <style>
-        li {
-            list-style-type: none;
-        }
-        .timestamp {
-            color: gray;
-            font-size: 0.8em;
-        }
-    </style>
+    <title>{{ chat.name }}</title>
 </head>
 <body>
+
     <h1>{{ chat.name }}</h1>
-    <ul>
-        {% for message in messages %}
-            <li>
-                <strong>{{ message.author.username }}</strong>: {{ message.content }}
-                <span class="timestamp">({{ message.timestamp }})</span>
-            </li>
-        {% endfor %}
-    </ul>
-    <form method="post">
+<ul>
+    {% for message, can_edit_or_delete in messages %}
+        <li>{{ message.content }} - {{ message.author.username }} - {{ message.created_at }}
+        {% if can_edit_or_delete %}
+            <a href="{% url 'edit_message' message_id=message.id %}">Edit</a> |
+            <a href="{% url 'delete_message' message_id=message.id %}">Delete</a>
+        {% endif %}
+        </li>
+    {% endfor %}
+</ul>
+
+    <form method="post" action="{% url 'send_message' chat_id=chat.id %}">
         {% csrf_token %}
-        {{ form.as_p }}
+        <label for="content">Write message:</label>
+        <input type="text" name="content">
         <button type="submit">Send</button>
     </form>
+<h2>Participants:</h2>
+<ul>
+    {% for participant in chat.participants.all %}
+        <li>{{ participant.username }}
+            {% if user.is_superuser and user != participant %}
+                <a href="{% url 'remove_participant' chat_id=chat.id participant_id=participant.id %}">Remove</a>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
 </body>
 </html>

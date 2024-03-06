@@ -5,7 +5,7 @@ from .models import Chat, Message
 class ChatForm(forms.ModelForm):
     class Meta:
         model = Chat
-        fields = ['name']
+        fields = ['name', 'participants']
 
 
 class MessageForm(forms.ModelForm):

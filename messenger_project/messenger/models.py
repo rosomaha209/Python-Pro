@@ -1,21 +1,32 @@
 from django.db import models
 from django.contrib.auth.models import User
-
-
-class Message(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    chat = models.ForeignKey('Chat', on_delete=models.CASCADE, related_name='messages')  # Зв'язок з моделлю Chat
-
-    def __str__(self):
-        return f'{self.author.username} - {self.timestamp}'
+from django.utils import timezone
 
 
 class Chat(models.Model):
     name = models.CharField(max_length=100)
-    members = models.ManyToManyField(User)
-    admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name='admin_chats')
+    participants = models.ManyToManyField(User)
 
-    def __str__(self):
-        return self.name
+    class Meta:
+        permissions = [
+            ("can_change_chat", "Can change chat permissions"),
+            ("can_create_chat", "Can create chat permissions"),
+        ]
+
+
+class Message(models.Model):
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name='messages')
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def can_edit(self, user):
+        return user == self.author
+
+    def can_delete(self, user):
+        if user == self.author:
+            if timezone.now() - self.created_at > timezone.timedelta(days=1):
+                return False
+            else:
+                return True
+        return False
