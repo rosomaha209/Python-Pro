@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -40,6 +41,15 @@ class HasPermissionMixin(UserPassesTestMixin):
 class AdminRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_superuser
+
+
+class AdminOrPermissionRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        user = self.request.user
+        if user.is_superuser or user.has_perm(self.permission_required):
+            return True
+        else:
+            raise PermissionDenied("You do not have permission to perform this action.")
 
 
 class ModeratorRequiredMixin(UserPassesTestMixin):

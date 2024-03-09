@@ -12,7 +12,8 @@ from messenger.models import Chat, Message, User
 
 from messenger.forms import MessageForm, UserPermissionForm
 
-from messenger.mixins import UserCanEditMessageMixin, UserIsAuthorMixin, HasPermissionMixin
+from messenger.mixins import UserCanEditMessageMixin, UserIsAuthorMixin, HasPermissionMixin, \
+    AdminOrPermissionRequiredMixin
 
 
 class ChatCreateView(UserPassesTestMixin, CreateView):
@@ -67,7 +68,7 @@ class MessageDeleteView(UserIsAuthorMixin, DeleteView):
     model = Message
     template_name = 'messenger/confirm_delete.html'
     success_url = reverse_lazy(
-        'chat_list')  # Припускаємо, що ви хочете перенаправити користувача на список чатів після видалення
+        'chat_list')
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -84,24 +85,14 @@ class ChatAddParticipantView(UserPassesTestMixin, UpdateView):
         return self.request.user.is_superuser
 
 
-class ChatRemoveParticipantView(UserPassesTestMixin, View):
+class ChatRemoveParticipantView(AdminOrPermissionRequiredMixin, View):
+    permission_required = 'messenger.can_remove_participants'
+
     def post(self, request, *args, **kwargs):
         chat = get_object_or_404(Chat, pk=kwargs.get('chat_id'))
         user_to_remove = get_object_or_404(User, pk=request.POST.get('user_id'))
-
-        # Тепер немає потреби перевіряти дозволи тут, оскільки це робиться в test_func()
         chat.participants.remove(user_to_remove)
         return redirect('chat_detail', pk=chat.pk)
-
-    def test_func(self):
-        user = self.request.user
-        # Дозволяє суперюзерам і користувачам з дозволом 'can_remove_participants' виконувати цю дію
-        if user.is_superuser or user.has_perm('messenger.can_remove_participants'):
-            return True
-        else:
-            # Якщо умови не виконуються, викидаємо PermissionDenied замість повернення False
-            # Для відправки явної помилки забороненого доступу
-            raise PermissionDenied("У вас немає дозволу видаляти учасників з цього чату.")
 
 
 class UserPermissionView(UserPassesTestMixin, FormView):
