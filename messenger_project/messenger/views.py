@@ -1,22 +1,103 @@
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView, LogoutView
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
-from django.views.generic import CreateView
+from django.views.generic import ListView, CreateView, UpdateView, DetailView, View, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+
+from .mixins import MessageEditDeleteMixin, SuperuserRequiredMixin
 from .models import Chat, Message
 from .forms import ChatForm, MessageForm
 
 
-@login_required
+class ChatListView(LoginRequiredMixin, ListView):
+    model = Chat
+    context_object_name = 'chats'
+    template_name = 'messenger/chat_list.html'
+
+    def get_queryset(self):
+        return Chat.objects.filter(participants=self.request.user)
+
+
+class CreateChatView(LoginRequiredMixin, SuperuserRequiredMixin, CreateView):
+    model = Chat
+    form_class = ChatForm
+    success_url = reverse_lazy('chat_list')
+    template_name = 'messenger/create_chat.html'
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        self.object.participants.add(self.request.user)
+        return response
+
+
+class EditChatView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Chat
+    form_class = ChatForm
+    template_name = 'messenger/edit_chat.html'
+    success_url = reverse_lazy('chat_list')
+
+    def test_func(self):
+        chat = self.get_object()
+        return self.request.user.has_perm('messenger.change_chat') or self.request.user.is_superuser or chat.participants.filter(id=self.request.user.id).exists()
+
+    def get_object(self, queryset=None):
+        chat_id = self.kwargs.get('chat_id')
+        return get_object_or_404(Chat, pk=chat_id)
+
+    def handle_no_permission(self):
+        raise PermissionDenied
+
+class ChatDetailView(LoginRequiredMixin, DetailView):
+    model = Chat
+    context_object_name = 'chat'
+    template_name = 'messenger/chat_detail.html'
+
+
+class SendMessageView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        chat_id = self.kwargs.get('chat_id')
+        chat = get_object_or_404(Chat, pk=chat_id)
+        Message.objects.create(
+            chat=chat,
+            author=request.user,
+            content=request.POST.get('content')
+        )
+        return redirect('chat_detail', pk=chat_id)
+
+
+class EditMessageView(LoginRequiredMixin, MessageEditDeleteMixin, UpdateView):
+    model = Message
+    form_class = MessageForm
+    template_name = 'messenger/edit_message.html'
+
+    def get_success_url(self):
+        return reverse_lazy('chat_detail', kwargs={'chat_id': self.object.chat.pk})
+
+
+class DeleteMessageView(LoginRequiredMixin, MessageEditDeleteMixin, DeleteView):
+    model = Message
+    template_name = 'messenger/confirm_delete.html'
+
+    def get_success_url(self):
+        return reverse_lazy('chat_detail', kwargs={'chat_id': self.object.chat.pk})
+
+    def get_queryset(self):
+        # Ця перевірка забезпечує, що користувач може видаляти лише свої повідомлення
+        qs = super().get_queryset()
+        return qs.filter(author=self.request.user)
+
+
 def chat_list(request):
     chats = Chat.objects.filter(participants=request.user)
     can_create_chat = request.user.has_perm('messenger.can_create_chat')
     can_change_chat = request.user.has_perm('messenger.can_change_chat')
     return render(request, 'messenger/chat_list.html', {'chats': chats, 'can_create_chat': can_create_chat,
-                                                        'can_change_chat': can_change_chat})  # Додайте can_change_chat до контексту
+                                                        'can_change_chat': can_change_chat})
 
 
 @login_required
@@ -89,30 +170,6 @@ def send_message(request, chat_id):
         author = request.user
         message = Message.objects.create(chat=chat, author=author, content=content)
     return redirect('chat_detail', chat_id=chat_id)
-
-
-@login_required
-def edit_message(request, message_id):
-    message = get_object_or_404(Message, pk=message_id)
-    if not message.can_edit(request.user):
-        return redirect('chat_detail', chat_id=message.chat.id)
-
-    if request.method == 'POST':
-        form = MessageForm(request.POST, instance=message)
-        if form.is_valid():
-            form.save()
-            return redirect('chat_detail', chat_id=message.chat.id)
-    else:
-        form = MessageForm(instance=message)
-    return render(request, 'messenger/edit_message.html', {'form': form})
-
-
-@login_required
-def delete_message(request, message_id):
-    message = get_object_or_404(Message, pk=message_id)
-    if message.can_edit(request.user) and message.can_delete(request.user):
-        message.delete()
-    return redirect('chat_detail', chat_id=message.chat.pk)
 
 
 @login_required

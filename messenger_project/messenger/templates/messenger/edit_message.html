@@ -5,11 +5,17 @@
     <title>Edit Message</title>
 </head>
 <body>
-    <h1>Edit Message</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Save</button>
-    </form>
+    {% if  has_permission %}
+        <ul class="messages">
+            <li class="error">У вас немає дозволу для редагування цього повідомлення.</li>
+        </ul>
+    {% else %}
+        <h1>Edit Message</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Save</button>
+        </form>
+    {% endif %}
 </body>
 </html>

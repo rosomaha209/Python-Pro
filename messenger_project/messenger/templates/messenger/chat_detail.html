@@ -5,14 +5,28 @@
     <title>{{ chat.name }}</title>
 </head>
 <body>
+{% if messages %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+                alert("{{ message }}");
+            {% endif %}
+        {% endfor %}
+    });
+</script>
+{% endif %}
+
+
+
 
     <h1>{{ chat.name }}</h1>
 <ul>
     {% for message, can_edit_or_delete in messages %}
         <li>{{ message.content }} - {{ message.author.username }} - {{ message.created_at }}
         {% if can_edit_or_delete %}
-            <a href="{% url 'edit_message' message_id=message.id %}">Edit</a> |
-            <a href="{% url 'delete_message' message_id=message.id %}">Delete</a>
+            <a href="{% url 'edit_message' pk=message.id %}">Edit</a>
+            <a href="{% url 'delete_message' pk=message.id %}">Delete</a>
         {% endif %}
         </li>
     {% endfor %}
@@ -34,5 +48,7 @@
         </li>
     {% endfor %}
 </ul>
+
+
 </body>
 </html>
