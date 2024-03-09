@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    <p>Ви впевнені, що хочете видалити це повідомлення?</p>
+    <button type="submit">Так, видалити</button>
+    <a href="{{ request.META.HTTP_REFERER }}">Скасувати</a>
+</form>
+{% endblock %}

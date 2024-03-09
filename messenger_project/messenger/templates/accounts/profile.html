@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Профіль користувача: {{ user.username }}</h2>
+<ul>
+    <li>Ім'я: {{ user.first_name }}</li>
+    <li>Прізвище: {{ user.last_name }}</li>
+    <li>Email: {{ user.email }}</li>
+    <li>Суперюзер: {{ user.is_superuser|yesno:"Так,Ні" }}</li>
+</ul>
+
+<h3>Дозволи:</h3>
+<ul>
+    {% for perm in user_permissions %}
+        <li>{{ perm }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

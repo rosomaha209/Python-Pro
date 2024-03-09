@@ -1,54 +1,49 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ chat.name }}</title>
-</head>
-<body>
-{% if messages %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        {% for message in messages %}
-            {% if message.tags == 'error' %}
-                alert("{{ message }}");
-            {% endif %}
-        {% endfor %}
-    });
-</script>
+{% extends "base.html" %}
+
+{% block title %}Чат: {{ chat.name }}{% endblock %}
+
+{% block content %}
+<h1>{{ chat.name }}</h1>
+
+<h2>Учасники</h2>
+
+<ul>
+    {% for user in chat.participants.all %}
+    <li>
+        {{ user.username }}
+
+            <form action="{% url 'remove_participant' chat.pk %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="user_id" value="{{ user.pk }}" />
+                <button type="submit">Видалити</button>
+            </form>
+
+    </li>
+    {% endfor %}
+</ul>
+
+<!-- Посилання для додавання учасників (для суперюзера) -->
+{% if request.user.is_superuser %}
+    <a href="{% url 'add_participant' chat.pk %}">Додати учасників</a>
 {% endif %}
 
 
-
-
-    <h1>{{ chat.name }}</h1>
+<h2>Повідомлення</h2>
 <ul>
-    {% for message, can_edit_or_delete in messages %}
-        <li>{{ message.content }} - {{ message.author.username }} - {{ message.created_at }}
-        {% if can_edit_or_delete %}
-            <a href="{% url 'edit_message' pk=message.id %}">Edit</a>
-            <a href="{% url 'delete_message' pk=message.id %}">Delete</a>
+    {% for message in chat.messages.all %}
+    <li>
+        <strong>{{ message.author.username }}</strong>: {{ message.text }}
+        <small>відправлено {{ message.created_at|date:"d M Y H:i" }}</small>
+        {% if message.author == request.user %}
+        <a href="{% url 'message_edit' message.id %}">Редагувати</a>
+        <a href="{% url 'message_delete' message.id %}">Видалити</a>
         {% endif %}
-        </li>
+    </li>
     {% endfor %}
 </ul>
-
-    <form method="post" action="{% url 'send_message' chat_id=chat.id %}">
-        {% csrf_token %}
-        <label for="content">Write message:</label>
-        <input type="text" name="content">
-        <button type="submit">Send</button>
-    </form>
-<h2>Participants:</h2>
-<ul>
-    {% for participant in chat.participants.all %}
-        <li>{{ participant.username }}
-            {% if user.is_superuser and user != participant %}
-                <a href="{% url 'remove_participant' chat_id=chat.id participant_id=participant.id %}">Remove</a>
-            {% endif %}
-        </li>
-    {% endfor %}
-</ul>
-
-
-</body>
-</html>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Відправити</button>
+</form>
+{% endblock %}

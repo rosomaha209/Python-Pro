@@ -17,8 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from messenger.views import ProfileView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('accounts/profile/', ProfileView.as_view(), name='user_profile'),
     path('messenger/', include('messenger.urls')),
 ]

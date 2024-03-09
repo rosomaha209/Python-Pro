@@ -1,25 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Chat List</title>
-</head>
-<body>
-    <h1>Chat List</h1>
-    <ul>
-   {% for chat in chats %}
-    <li>
-        <a href="{% url 'chat_detail' chat_id=chat.id %}">{{ chat.name }}</a>
-        {% if can_change_chat %}
-            <a href="{% url 'edit_chat' chat_id=chat.id %}">(Edit)</a>
-        {% endif %}
-    </li>
-{% endfor %}
-    </ul>
+{% extends "base.html" %}
 
-    {% if can_create_chat or request.user.is_superuser %}
-    <a href="{% url 'create_chat' %}">Create New Chat</a>
-{% endif %}
-
-</body>
-</html>
+{% block content %}
+<h2>Мої чати</h2>
+<ul>
+    {% for chat in object_list %}
+        <li>
+            <a href="{% url 'chat_detail' chat.id %}">{{ chat.name }}</a>
+            - Учасники: {{ chat.participants.all|join:", " }}
+        </li>
+    {% empty %}
+        <li>Ви поки що не маєте чатів.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

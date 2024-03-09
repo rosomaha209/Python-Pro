@@ -1,184 +1,140 @@
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
+from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import get_object_or_404, redirect, render
+from django.http import HttpResponseForbidden
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DetailView, View, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views import View
+from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView, FormView, TemplateView
 
-from .mixins import MessageEditDeleteMixin, SuperuserRequiredMixin
-from .models import Chat, Message
-from .forms import ChatForm, MessageForm
+from messenger.models import Chat, Message, User
+
+from messenger.forms import MessageForm, UserPermissionForm
+
+from messenger.mixins import UserCanEditMessageMixin, UserIsAuthorMixin, HasPermissionMixin
 
 
-class ChatListView(LoginRequiredMixin, ListView):
+class ChatCreateView(UserPassesTestMixin, CreateView):
     model = Chat
-    context_object_name = 'chats'
+    fields = ['name', 'participants']
+    template_name = 'messenger/create_chat.html'
+    success_url = reverse_lazy('chat_list')
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+
+class ChatListView(ListView):
+    model = Chat
     template_name = 'messenger/chat_list.html'
 
     def get_queryset(self):
         return Chat.objects.filter(participants=self.request.user)
 
 
-class CreateChatView(LoginRequiredMixin, SuperuserRequiredMixin, CreateView):
+class ChatDetailView(DetailView):
     model = Chat
-    form_class = ChatForm
-    success_url = reverse_lazy('chat_list')
-    template_name = 'messenger/create_chat.html'
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        self.object.participants.add(self.request.user)
-        return response
-
-
-class EditChatView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    model = Chat
-    form_class = ChatForm
-    template_name = 'messenger/edit_chat.html'
-    success_url = reverse_lazy('chat_list')
-
-    def test_func(self):
-        chat = self.get_object()
-        return self.request.user.has_perm('messenger.change_chat') or self.request.user.is_superuser or chat.participants.filter(id=self.request.user.id).exists()
-
-    def get_object(self, queryset=None):
-        chat_id = self.kwargs.get('chat_id')
-        return get_object_or_404(Chat, pk=chat_id)
-
-    def handle_no_permission(self):
-        raise PermissionDenied
-
-class ChatDetailView(LoginRequiredMixin, DetailView):
-    model = Chat
-    context_object_name = 'chat'
     template_name = 'messenger/chat_detail.html'
+    context_object_name = 'chat'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = MessageForm()
+        return context
 
-class SendMessageView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
-        chat_id = self.kwargs.get('chat_id')
-        chat = get_object_or_404(Chat, pk=chat_id)
-        Message.objects.create(
-            chat=chat,
-            author=request.user,
-            content=request.POST.get('content')
-        )
-        return redirect('chat_detail', pk=chat_id)
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.author = request.user
+            message.chat = self.get_object()
+            message.save()
+            return redirect('chat_detail', pk=message.chat.pk)
+        return self.render_to_response(self.get_context_data(form=form))
 
 
-class EditMessageView(LoginRequiredMixin, MessageEditDeleteMixin, UpdateView):
+class MessageUpdateView(UserCanEditMessageMixin, UpdateView):
     model = Message
     form_class = MessageForm
     template_name = 'messenger/edit_message.html'
 
     def get_success_url(self):
-        return reverse_lazy('chat_detail', kwargs={'chat_id': self.object.chat.pk})
+        return self.object.chat.get_absolute_url()
 
 
-class DeleteMessageView(LoginRequiredMixin, MessageEditDeleteMixin, DeleteView):
+class MessageDeleteView(UserIsAuthorMixin, DeleteView):
     model = Message
     template_name = 'messenger/confirm_delete.html'
-
-    def get_success_url(self):
-        return reverse_lazy('chat_detail', kwargs={'chat_id': self.object.chat.pk})
+    success_url = reverse_lazy(
+        'chat_list')  # Припускаємо, що ви хочете перенаправити користувача на список чатів після видалення
 
     def get_queryset(self):
-        # Ця перевірка забезпечує, що користувач може видаляти лише свої повідомлення
-        qs = super().get_queryset()
-        return qs.filter(author=self.request.user)
+        queryset = super().get_queryset()
+        return queryset.filter(author=self.request.user)
 
 
-def chat_list(request):
-    chats = Chat.objects.filter(participants=request.user)
-    can_create_chat = request.user.has_perm('messenger.can_create_chat')
-    can_change_chat = request.user.has_perm('messenger.can_change_chat')
-    return render(request, 'messenger/chat_list.html', {'chats': chats, 'can_create_chat': can_create_chat,
-                                                        'can_change_chat': can_change_chat})
+class ChatAddParticipantView(UserPassesTestMixin, UpdateView):
+    model = Chat
+    template_name = 'messenger/chat_add_participant.html'
+    fields = ['participants']
+    success_url = reverse_lazy('chat_list')
+
+    def test_func(self):
+        return self.request.user.is_superuser
 
 
-@login_required
-def edit_chat(request, chat_id):
-    chat = get_object_or_404(Chat, pk=chat_id)
+class ChatRemoveParticipantView(UserPassesTestMixin, View):
+    def post(self, request, *args, **kwargs):
+        chat = get_object_or_404(Chat, pk=kwargs.get('chat_id'))
+        user_to_remove = get_object_or_404(User, pk=request.POST.get('user_id'))
 
-    if not request.user.has_perm('messenger.change_chat') and not request.user.is_superuser:
-        raise PermissionDenied
+        # Тепер немає потреби перевіряти дозволи тут, оскільки це робиться в test_func()
+        chat.participants.remove(user_to_remove)
+        return redirect('chat_detail', pk=chat.pk)
 
-    if request.method == 'POST':
-        form = ChatForm(request.POST, instance=chat)
-        if form.is_valid():
-            form.save()
-            return redirect('chat_list')
-    else:
-        form = ChatForm(instance=chat)
-
-    return render(request, 'messenger/edit_chat.html', {'form': form})
-
-
-@login_required
-def chat_detail(request, chat_id):
-    chat = get_object_or_404(Chat, pk=chat_id)
-    if request.user in chat.participants.all():
-        messages = chat.messages.all()
-        messages_with_authorship = []
-        for message in messages:
-            can_edit_or_delete = False
-            if message.can_edit(request.user):
-                can_edit_or_delete = True
-            messages_with_authorship.append((message, can_edit_or_delete))
-        return render(request, 'messenger/chat_detail.html', {'chat': chat, 'messages': messages_with_authorship})
-    else:
-        return redirect('chat_list')
+    def test_func(self):
+        user = self.request.user
+        # Дозволяє суперюзерам і користувачам з дозволом 'can_remove_participants' виконувати цю дію
+        if user.is_superuser or user.has_perm('messenger.can_remove_participants'):
+            return True
+        else:
+            # Якщо умови не виконуються, викидаємо PermissionDenied замість повернення False
+            # Для відправки явної помилки забороненого доступу
+            raise PermissionDenied("У вас немає дозволу видаляти учасників з цього чату.")
 
 
-@login_required
-def create_chat(request):
-    if not request.user.has_perm('messenger.can_create_chat') and not request.user.is_superuser:
-        raise PermissionDenied
+class UserPermissionView(UserPassesTestMixin, FormView):
+    template_name = 'messenger/user_permissions.html'
+    form_class = UserPermissionForm
+    success_url = reverse_lazy('user_permissions')
 
-    if request.method == 'POST':
-        form = ChatForm(request.POST)
-        if form.is_valid():
-            chat = form.save()
-            chat.participants.add(request.user)
-            return redirect('chat_list')
-    else:
-        form = ChatForm()
-    return render(request, 'messenger/create_chat.html', {'form': form})
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def form_valid(self, form):
+        form.save_permissions()
+        return super().form_valid(form)
 
 
-@login_required
-def add_user_to_chat(request, chat_id):
-    chat = get_object_or_404(Chat, pk=chat_id)
-    if request.method == 'POST':
-        username = request.POST['username']
-        user = User.objects.get(username=username)
-        chat.participants.add(user)
-        return redirect('chat_detail', chat_id=chat_id)
-    else:
-        return render(request, 'messenger/add_user_to_chat.html', {'chat': chat})
+class MessageCreateView(CreateView):
+    model = Message
+    fields = ['text']
+    template_name = 'messenger/create_message.html'
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        form.instance.chat_id = self.kwargs['chat_id']
+        return super().form_valid(form)
 
 
-@login_required
-def send_message(request, chat_id):
-    if request.method == 'POST':
-        chat = Chat.objects.get(pk=chat_id)
-        content = request.POST['content']
-        author = request.user
-        message = Message.objects.create(chat=chat, author=author, content=content)
-    return redirect('chat_detail', chat_id=chat_id)
+class ProfileView(LoginRequiredMixin, TemplateView):
+    template_name = 'accounts/profile.html'
 
-
-@login_required
-@user_passes_test(lambda u: u.is_superuser)
-def remove_participant(request, chat_id, participant_id):
-    chat = get_object_or_404(Chat, pk=chat_id)
-    participant = get_object_or_404(User, pk=participant_id)
-    chat.participants.remove(participant)
-    return redirect('chat_detail', chat_id=chat_id)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_permissions'] = self.request.user.get_user_permissions()
+        return context
 
 
 class CustomLoginView(LoginView):

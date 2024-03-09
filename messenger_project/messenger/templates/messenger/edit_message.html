@@ -1,21 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Edit Message</title>
-</head>
-<body>
-    {% if  has_permission %}
-        <ul class="messages">
-            <li class="error">У вас немає дозволу для редагування цього повідомлення.</li>
-        </ul>
-    {% else %}
-        <h1>Edit Message</h1>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Save</button>
-        </form>
-    {% endif %}
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Редагувати Повідомлення{% endblock %}
+
+{% block content %}
+<h1>Редагувати Повідомлення</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Зберегти зміни</button>
+</form>
+
+<a href="{{ request.META.HTTP_REFERER }}">Назад до чату</a>
+{% endblock %}

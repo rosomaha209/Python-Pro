@@ -1,32 +1,32 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.urls import reverse
 from django.utils import timezone
+
+User = get_user_model()
 
 
 class Chat(models.Model):
-    name = models.CharField(max_length=100)
-    participants = models.ManyToManyField(User)
+    name = models.CharField(max_length=255)
+    participants = models.ManyToManyField(User, related_name='chats')
 
     class Meta:
         permissions = [
-            ("can_change_chat", "Can change chat permissions"),
-            ("can_create_chat", "Can create chat permissions"),
+            ("can_remove_participants", "Can remove participants from chat"),
         ]
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('chat_detail', kwargs={'pk': self.pk})
 
 
 class Message(models.Model):
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='messages')
+    text = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name='messages')
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
 
-    def can_edit(self, user):
-        return user == self.author
-
-    def can_delete(self, user):
-        if user == self.author:
-            if timezone.now() - self.created_at > timezone.timedelta(days=1):
-                return False
-            else:
-                return True
-        return False
+    def __str__(self):
+        return f'Message by {self.author.username} on {self.created_at.strftime("%Y-%m-%d %H:%M")}'
