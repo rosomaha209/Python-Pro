@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
@@ -24,6 +25,11 @@ class ChatCreateView(UserPassesTestMixin, CreateView):
 
     def test_func(self):
         return self.request.user.is_superuser
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'у вас недостатньо прав для виконання цієї дії.')
+        return redirect(self.request.META.get('HTTP_REFERER', 'chat_list'))
+
 
 
 class ChatListView(ListView):
@@ -86,6 +92,7 @@ class ChatAddParticipantView(UserPassesTestMixin, UpdateView):
 
 
 class ChatRemoveParticipantView(AdminOrPermissionRequiredMixin, View):
+    raise_exception = True
     permission_required = 'messenger.can_remove_participants'
 
     def post(self, request, *args, **kwargs):
@@ -93,6 +100,10 @@ class ChatRemoveParticipantView(AdminOrPermissionRequiredMixin, View):
         user_to_remove = get_object_or_404(User, pk=request.POST.get('user_id'))
         chat.participants.remove(user_to_remove)
         return redirect('chat_detail', pk=chat.pk)
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'у вас недостатньо прав для виконання цієї дії.')
+        return redirect(self.request.META.get('HTTP_REFERER', 'chat_list'))
 
 
 class UserPermissionView(UserPassesTestMixin, FormView):
@@ -106,6 +117,10 @@ class UserPermissionView(UserPassesTestMixin, FormView):
     def form_valid(self, form):
         form.save_permissions()
         return super().form_valid(form)
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'у вас недостатньо прав для виконання цієї дії.')
+        return redirect(self.request.META.get('HTTP_REFERER', 'chat_list'))
 
 
 class MessageCreateView(CreateView):

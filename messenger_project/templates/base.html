@@ -14,11 +14,38 @@
                 <li><a href="{% url 'login' %}">Логін</a></li>
                 <li><a href="{% url 'chat_list' %}">Чати</a></li>
                 <li><a href="{% url 'user_permissions' %}">Дозволи користувачів</a></li>
-                <!-- Додайте тут інші посилання -->
+                <li><a href="{% url 'logout' %}">Вихід</a></li>
+                <li><a href="{% url 'user_profile' %}">Профіль</a></li>
+                <li><a href="{% url 'create_chat' %}">Створити чат</a></li>
             </ul>
         </nav>
     </header>
-
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+        <script>
+    // Перевірка, чи є повідомлення в Django messages framework
+    {% if messages %}
+        // Створюємо об'єкт, який містить всі повідомлення
+        var messages = [];
+        {% for message in messages %}
+            // Додаємо кожне повідомлення до списку
+            messages.push("{{ message|escapejs }}");
+        {% endfor %}
+        // Викликаємо SweetAlert для кожного повідомлення
+        messages.forEach(function(msg) {
+            swal({
+                text: msg,
+                icon: "info" // Іконка повідомлення (може бути "success", "error", "warning", "info", "question")
+            });
+        });
+    {% endif %}
+</script>
+    <script>
+    // Перевіряємо, чи сторінка має помилку 403 (Forbidden)
+    if (window.location.href.indexOf('403') !== -1) {
+        // Перезавантажуємо сторінку
+        window.location.reload();
+    }
+</script>
     <main>
         {% block content %}
         {% endblock %}
