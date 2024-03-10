@@ -2,19 +2,13 @@ from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
-from django.core.exceptions import PermissionDenied
-from django.http import HttpResponseForbidden
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView, FormView, TemplateView
-
-from messenger.models import Chat, Message, User
-
 from messenger.forms import MessageForm, UserPermissionForm
-
-from messenger.mixins import UserCanEditMessageMixin, UserIsAuthorMixin, HasPermissionMixin, \
-    AdminOrPermissionRequiredMixin
+from messenger.mixins import UserCanEditMessageMixin, UserIsAuthorMixin, AdminOrPermissionRequiredMixin
+from messenger.models import Chat, Message, User
 
 
 class ChatCreateView(AdminOrPermissionRequiredMixin, CreateView):
@@ -23,6 +17,11 @@ class ChatCreateView(AdminOrPermissionRequiredMixin, CreateView):
     template_name = 'messenger/create_chat.html'
     success_url = reverse_lazy('chat_list')
     permission_required = 'messenger.can_create_chat'
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'Чат було успішно створено.')
+        return response
 
     def handle_no_permission(self):
         messages.error(self.request, 'У вас недостатньо прав для виконання цієї дії.')
@@ -65,7 +64,12 @@ class ChatDetailView(DetailView):
             message = form.save(commit=False)
             message.author = request.user
             message.chat = self.get_object()
+            message.to_superuser = message.chat.participants.filter(is_superuser=True).exists()
             message.save()
+
+            if message.to_superuser:
+                messages.info(request, "Ви успішно надіслали повідомлення суперюзеру.")
+
             return redirect('chat_detail', pk=message.chat.pk)
         return self.render_to_response(self.get_context_data(form=form))
 
@@ -140,7 +144,12 @@ class MessageCreateView(CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user
         form.instance.chat_id = self.kwargs['chat_id']
-        return super().form_valid(form)
+        response = super().form_valid(form)
+
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy('chat_detail', kwargs={'chat_id': self.kwargs['chat_id']})
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):

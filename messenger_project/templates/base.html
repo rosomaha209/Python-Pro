@@ -12,6 +12,7 @@
         <nav>
             <ul>
                 <li><a href="{% url 'login' %}">Логін</a></li>
+                <li><a href="{% url 'signup' %}">Реєстрація</a></li>
                 <li><a href="{% url 'chat_list' %}">Чати</a></li>
                 <li><a href="{% url 'user_permissions' %}">Дозволи користувачів</a></li>
                 <li><a href="{% url 'user_profile' %}">Профіль</a></li>
@@ -20,24 +21,45 @@
         </nav>
     </header>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-        <script>
-    // Перевірка, чи є повідомлення в Django messages framework
+<script>
     {% if messages %}
-        // Створюємо об'єкт, який містить всі повідомлення
         var messages = [];
         {% for message in messages %}
-            // Додаємо кожне повідомлення до списку
-            messages.push("{{ message|escapejs }}");
+            // Додаємо кожне повідомлення та його тип до списку
+            messages.push({
+                text: "{{ message|escapejs }}",
+                type: "{{ message.level_tag }}"
+            });
         {% endfor %}
-        // Викликаємо SweetAlert для кожного повідомлення
-        messages.forEach(function(msg) {
+
+        // Викликаємо SweetAlert для кожного повідомлення з відповідною іконкою
+        messages.forEach(function(item) {
+            var icon;
+            switch(item.type) {
+                case "debug":
+                case "info":
+                    icon = "info";
+                    break;
+                case "success":
+                    icon = "success";
+                    break;
+                case "warning":
+                    icon = "warning";
+                    break;
+                case "error":
+                    icon = "error";
+                    break;
+                default:
+                    icon = "info"; // Іконка за замовчуванням
+            }
             swal({
-                text: msg,
-                icon: "error" // Іконка повідомлення (може бути "success", "error", "warning", "info", "question")
+                text: item.text,
+                icon: icon
             });
         });
     {% endif %}
 </script>
+
     <script>
     // Перевіряємо, чи сторінка має помилку 403 (Forbidden)
     if (window.location.href.indexOf('403') !== -1) {
