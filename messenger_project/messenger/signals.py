@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from django.contrib.auth import user_logged_in, user_logged_out
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete, m2m_changed
@@ -11,12 +12,18 @@ logger = logging.getLogger(__name__)
 
 @receiver(user_logged_in)
 def user_logged_in_handler(sender, request, user, **kwargs):
-    logger.info(f"Користувач {user} увійшов у систему.")
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_message = f"Користувач {user.username} увійшов у систему о {now}."
+    logger.info(log_message)
+    print(log_message)
 
 
 @receiver(user_logged_out)
 def user_logged_out_handler(sender, request, user, **kwargs):
-    logger.info(f"Користувач {user} вийшов з системи.")
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_message = f"Користувач {user.username} вийшов з системи о {now}."
+    logger.info(log_message)
+    print(log_message)
 
 
 @receiver(pre_save, sender=Message)
