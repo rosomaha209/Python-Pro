@@ -12,7 +12,9 @@ class Chat(models.Model):
 
     class Meta:
         permissions = [
-            ("can_remove_participants", "Can remove participants from chat"),
+            ("can_remove_participants", "Можливість видаляти учасників чату"),
+            ("can_create_chat", "можливість створювати чати"),
+            ("can_delete_chat", "можливість видаляти чати"),
         ]
 
     def __str__(self):

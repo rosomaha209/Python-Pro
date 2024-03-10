@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Ви впевнені, що хочете видалити чат "{{ object.name }}"?</h2>
+
+<form method="post">{% csrf_token %}
+    <button type="submit">Так, видалити</button>
+    <a href="{% url 'chat_list' %}">Ні, повернутися до списку чатів</a>
+</form>
+{% endblock %}

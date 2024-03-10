@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.urls import path
 from .views import CustomLoginView, CustomLogoutView, SignUpView, ChatCreateView, ChatListView, MessageCreateView, \
     ChatDetailView, MessageUpdateView, MessageDeleteView, ChatAddParticipantView, ChatRemoveParticipantView, \
-    UserPermissionView, ProfileView
+    UserPermissionView, ProfileView, ChatDeleteView
 
 urlpatterns = [
     path('login/', CustomLoginView.as_view(), name='login'),
@@ -17,5 +17,6 @@ urlpatterns = [
     path('chat/<int:pk>/add_participant/', ChatAddParticipantView.as_view(), name='add_participant'),
     path('chat/<int:chat_id>/remove_participant/', ChatRemoveParticipantView.as_view(), name='remove_participant'),
     path('user_permissions/', UserPermissionView.as_view(), name='user_permissions'),
+    path('chat/<int:pk>/delete/', ChatDeleteView.as_view(), name='chat_delete'),
 
 ]

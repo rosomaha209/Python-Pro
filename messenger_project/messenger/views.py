@@ -17,19 +17,28 @@ from messenger.mixins import UserCanEditMessageMixin, UserIsAuthorMixin, HasPerm
     AdminOrPermissionRequiredMixin
 
 
-class ChatCreateView(UserPassesTestMixin, CreateView):
+class ChatCreateView(AdminOrPermissionRequiredMixin, CreateView):
     model = Chat
     fields = ['name', 'participants']
     template_name = 'messenger/create_chat.html'
     success_url = reverse_lazy('chat_list')
-
-    def test_func(self):
-        return self.request.user.is_superuser
+    permission_required = 'messenger.can_create_chat'
 
     def handle_no_permission(self):
-        messages.error(self.request, 'у вас недостатньо прав для виконання цієї дії.')
-        return redirect(self.request.META.get('HTTP_REFERER', 'chat_list'))
+        messages.error(self.request, 'У вас недостатньо прав для виконання цієї дії.')
+        return redirect(self.request.META.get('HTTP_REFERER', '/'))
 
+
+class ChatDeleteView(UserPassesTestMixin, DeleteView):
+    model = Chat
+    success_url = reverse_lazy('chat_list')
+
+    def test_func(self):
+        return self.request.user.has_perm('messenger.can_delete_chat') or self.request.user.is_superuser
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'У вас недостатньо прав для виконання цієї дії.')
+        return redirect('chat_list')
 
 
 class ChatListView(ListView):

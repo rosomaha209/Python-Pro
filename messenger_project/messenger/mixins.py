@@ -39,19 +39,19 @@ class HasPermissionMixin(UserPassesTestMixin):
         return self.request.user.has_perm(self.permission_required)
 
 
+class AdminOrPermissionRequiredMixin(UserPassesTestMixin):
+    permission_required = None
+
+    def test_func(self):
+        has_permission = self.request.user.has_perm(self.permission_required)
+        return self.request.user.is_superuser or has_permission
+
+
 class AdminRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_superuser
 
 
-class AdminOrPermissionRequiredMixin(UserPassesTestMixin):
-    def test_func(self):
-        user = self.request.user
-        if user.is_superuser or user.has_perm(self.permission_required):
-            return True
-        else:
-
-            return False
 
 
 class ModeratorRequiredMixin(UserPassesTestMixin):

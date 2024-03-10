@@ -7,6 +7,9 @@
         <li>
             <a href="{% url 'chat_detail' chat.id %}">{{ chat.name }}</a>
             - Учасники: {{ chat.participants.all|join:", " }}
+
+                | <a href="{% url 'chat_delete' chat.id %}">Видалити</a>
+
         </li>
     {% empty %}
         <li>Ви поки що не маєте чатів.</li>
