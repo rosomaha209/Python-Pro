@@ -2,10 +2,12 @@ import logging
 from datetime import datetime
 
 from django.contrib.auth import user_logged_in, user_logged_out
-from django.db.models.signals import pre_save, post_save, pre_delete, post_delete, m2m_changed
+from django.core.signals import request_finished, request_started
+from django.db.models.signals import (m2m_changed, post_delete, post_save,
+                                      pre_delete, pre_save)
 from django.dispatch import receiver
-from django.core.signals import request_started, request_finished
-from .models import Message, Chat
+
+from .models import Chat, Message
 
 logger = logging.getLogger(__name__)
 

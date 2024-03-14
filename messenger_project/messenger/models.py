@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth import get_user_model
+from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
@@ -33,3 +33,8 @@ class Message(models.Model):
 
     def __str__(self):
         return f'Message by {self.author.username} on {self.created_at.strftime("%Y-%m-%d %H:%M")}'
+
+
+class UploadedFile(models.Model):
+    name = models.CharField(max_length=255, verbose_name='Назва файлу')
+    file = models.FileField(verbose_name='Файл')

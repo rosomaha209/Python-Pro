@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Список файлів</h2>
+<ul>
+    {% for file_info in files_with_types %}
+    <li>
+        <strong>{{ file_info.file.name }}</strong><br>
+        {% if file_info.file_type == 'audio' %}
+        <!-- Відображення аудіофайлу -->
+        <audio controls>
+            <source src="{{ file_info.file.file.url }}" type="audio/mpeg">
+            Ваш браузер не підтримує аудіо елемент.
+        </audio>
+        {% elif file_info.file_type == 'video' %}
+        <!-- Відображення відеофайлу -->
+        <video width="320" height="240" controls>
+            <source src="{{ file_info.file.file.url }}" type="video/mp4">
+            Ваш браузер не підтримує відео елемент.
+        </video>
+        {% elif file_info.file_type == 'image' %}
+        <!-- Відображення зображення -->
+        <img src="{{ file_info.file.file.url }}" alt="{{ file_info.file.name }}" style="width: 100%; max-width: 300px;">
+        {% elif file_info.file_type == 'text' %}
+        <!-- Відображення тексту -->
+        <div>
+            <p>{{ file_info.content|truncatewords:30 }}</p> <!-- Показуємо перші 30 слів -->
+            <a href="{% url 'edit_text_file' file_info.file.pk %}">Редагувати</a>
+        </div>
+        {% else %}
+        <!-- Інші файли -->
+        <a href="{{ file_info.file.file.url }}" download>Завантажити {{ file_info.file.name }}</a>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

@@ -1,8 +1,8 @@
 from django import forms
-from django.contrib.auth.models import User, Permission
+from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
 
-from .models import Chat, Message
+from .models import Chat, Message, UploadedFile
 
 
 class ChatForm(forms.ModelForm):
@@ -42,3 +42,12 @@ class UserPermissionForm(forms.Form):
                 selected_user.user_permissions.add(perm)
             else:
                 selected_user.user_permissions.remove(perm)
+
+
+class FileUploadForm(forms.ModelForm):
+    class Meta:
+        model = UploadedFile
+        fields = ['name', 'file']
+
+class TextFileForm(forms.Form):
+    content = forms.CharField(widget=forms.Textarea)

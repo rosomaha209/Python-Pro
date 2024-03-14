@@ -1,14 +1,22 @@
+import os
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView, LogoutView
-from django.shortcuts import redirect, get_object_or_404
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView, FormView, TemplateView
-from messenger.forms import MessageForm, UserPermissionForm
-from messenger.mixins import UserCanEditMessageMixin, UserIsAuthorMixin, AdminOrPermissionRequiredMixin
-from messenger.models import Chat, Message, User
+from django.views.generic import (CreateView, DeleteView, DetailView, FormView,
+                                  ListView, TemplateView, UpdateView)
+
+from messenger.forms import (FileUploadForm, MessageForm, TextFileForm,
+                             UserPermissionForm)
+from messenger.mixins import (AdminOrPermissionRequiredMixin,
+                              UserCanEditMessageMixin, UserIsAuthorMixin)
+from messenger.models import Chat, Message, UploadedFile, User
 
 
 class ChatCreateView(AdminOrPermissionRequiredMixin, CreateView):
@@ -173,3 +181,99 @@ class SignUpView(CreateView):
     form_class = UserCreationForm
     success_url = reverse_lazy('login')
     template_name = 'registration/registration_form.html'
+
+
+class FileUploadView(FormView):
+    template_name = 'messenger/file_upload.html'
+    form_class = FileUploadForm
+    success_url = reverse_lazy('file_list')
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
+
+
+class FileListView(ListView):
+    model = UploadedFile
+    template_name = 'messenger/file_list.html'
+    context_object_name = 'files'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        files_with_types = []
+        files_to_remove = []
+
+        for file in context['files']:
+            file_path = os.path.join(settings.MEDIA_ROOT, file.file.name)
+
+            # Перевіряємо, чи існує файл на диску
+            if not os.path.exists(file_path):
+                files_to_remove.append(file)
+                continue
+
+            file_info = {
+                'file': file,
+                'file_type': 'other',
+                'content': ''  # Інформація про вміст
+            }
+
+            if file.file.url.lower().endswith(('.mp3', '.wav')):
+                file_info['file_type'] = 'audio'
+            elif file.file.url.lower().endswith('.mp4'):
+                file_info['file_type'] = 'video'
+            elif file.file.url.lower().endswith(('.png', '.jpg', '.jpeg')):
+                file_info['file_type'] = 'image'
+            elif file.file.url.lower().endswith('.txt'):
+                file_info['file_type'] = 'text'
+                # Читання вмісту текстового файлу
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        file_info['content'] = f.read()
+                except IOError:
+                    file_info['content'] = "Неможливо прочитати файл."
+
+            files_with_types.append(file_info)
+
+        # Видалення записів про відсутні файли
+        for file in files_to_remove:
+            file.delete()
+
+        context['files_with_types'] = files_with_types
+        return context
+
+
+class EditTextView(FormView):
+    template_name = 'messenger/edit_text_file.html'
+    form_class = TextFileForm
+
+    def get_initial(self):
+        file_id = self.kwargs.get('file_id')
+        file = UploadedFile.objects.get(pk=file_id)
+        file_path = os.path.join(settings.MEDIA_ROOT, file.file.name)
+
+        try:
+            with open(file_path, 'r', encoding='utf-8', newline='') as f:
+                content = f.read()
+        except IOError:
+            raise Http404("Помилка при читанні файлу.")
+
+        # Нормалізація символів кінця рядка
+        content = content.replace('\r\n', '\n')
+        return {'content': content}
+
+    def form_valid(self, form):
+        file_id = self.kwargs.get('file_id')
+        file = UploadedFile.objects.get(pk=file_id)
+        file_path = os.path.join(settings.MEDIA_ROOT, file.file.name)
+        content = form.cleaned_data['content']
+
+        # Вибір символа кінця рядка
+        content = content.replace('\r\n', '\n').replace('\r', '\n')
+
+        with open(file_path, 'w', encoding='utf-8', newline='') as f:
+            f.write(content)
+
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('file_list')

@@ -1,6 +1,6 @@
 from django.conf import settings
-from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseForbidden, request
 from django.shortcuts import get_object_or_404, redirect

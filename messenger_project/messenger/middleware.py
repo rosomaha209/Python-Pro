@@ -1,5 +1,6 @@
 import logging
 import time
+
 from django.utils.deprecation import MiddlewareMixin
 
 logger = logging.getLogger(__name__)
