@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.http import JsonResponse
 from django.urls import reverse
 from django.utils import timezone
 
@@ -38,3 +39,5 @@ class Message(models.Model):
 class UploadedFile(models.Model):
     name = models.CharField(max_length=255, verbose_name='Назва файлу')
     file = models.FileField(verbose_name='Файл')
+
+

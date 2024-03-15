@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block content %}
  <h2>Registration</h2>
     <form method="post">
@@ -7,4 +7,9 @@
         {{ form.as_p }}
         <button type="submit">Register</button>
     </form>
+<script type="text/javascript">
+    var checkUsernameURL = "{% url 'check_username' %}";
+</script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="{% static 'js/register_username_validation.js' %}"></script>
 {% endblock %}

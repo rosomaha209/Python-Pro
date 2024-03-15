@@ -49,5 +49,6 @@ class FileUploadForm(forms.ModelForm):
         model = UploadedFile
         fields = ['name', 'file']
 
+
 class TextFileForm(forms.Form):
     content = forms.CharField(widget=forms.Textarea)
