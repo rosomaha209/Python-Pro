@@ -1,8 +1,12 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Чат: {{ chat.name }}{% endblock %}
 
 {% block content %}
+<script>
+    const chatId = {{ chat.id }};
+</script>
 <h1>{{ chat.name }}</h1>
 
 <h2>Учасники</h2>
@@ -10,7 +14,7 @@
 <ul>
     {% for user in chat.participants.all %}
     <li>
-        {{ user.username }}
+        {{ user.username }} - <span id="status-user-{{ user.id }}">...</span>
 
             <form action="{% url 'remove_participant' chat.pk %}" method="post" style="display:inline;">
                 {% csrf_token %}
@@ -22,7 +26,6 @@
     {% endfor %}
 </ul>
 
-<!-- Посилання для додавання учасників (для суперюзера) -->
 {% if request.user.is_superuser %}
     <a href="{% url 'add_participant' chat.pk %}">Додати учасників</a>
 {% endif %}
@@ -46,4 +49,7 @@
     {{ form.as_p }}
     <button type="submit">Відправити</button>
 </form>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/check_user_status.js' %}"></script>
 {% endblock %}

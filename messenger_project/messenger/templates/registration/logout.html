@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Logout</title>
-</head>
-<body>
-    <h2>Logout</h2>
-    <p>You have been logged out.</p>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<h2>Ви впевнені, що хочете вийти?</h2>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Так, вийти</button>
+</form>
+<a href="{% url 'profile' %}">Ні, повернутися назад</a>
+{% endblock %}

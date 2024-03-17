@@ -5,9 +5,10 @@ from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView, LogoutView
-from django.http import Http404, JsonResponse
+from django.http import Http404, JsonResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import (CreateView, DeleteView, DetailView, FormView,
                                   ListView, TemplateView, UpdateView)
@@ -16,7 +17,7 @@ from messenger.forms import (FileUploadForm, MessageForm, TextFileForm,
                              UserPermissionForm)
 from messenger.mixins import (AdminOrPermissionRequiredMixin,
                               UserCanEditMessageMixin, UserIsAuthorMixin)
-from messenger.models import Chat, Message, UploadedFile, User
+from messenger.models import Chat, Message, UploadedFile, User, UserStatus
 
 
 class ChatCreateView(AdminOrPermissionRequiredMixin, CreateView):
@@ -48,18 +49,20 @@ class ChatDeleteView(UserPassesTestMixin, DeleteView):
         return redirect('chat_list')
 
 
-class ChatListView(ListView):
+class ChatListView(LoginRequiredMixin, ListView):
     model = Chat
     template_name = 'messenger/chat_list.html'
+    login_url = reverse_lazy('login')
 
     def get_queryset(self):
         return Chat.objects.filter(participants=self.request.user)
 
 
-class ChatDetailView(DetailView):
+class ChatDetailView(LoginRequiredMixin, DetailView):
     model = Chat
     template_name = 'messenger/chat_detail.html'
     context_object_name = 'chat'
+    login_url = reverse_lazy('login')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -176,6 +179,11 @@ class CustomLoginView(LoginView):
 class CustomLogoutView(LogoutView):
     template_name = 'registration/logout.html'
 
+    def post(self, request, *args, **kwargs):
+        messages.info(request, "Ви вийшли з системи.")
+        super().post(request, *args, **kwargs)
+        return HttpResponseRedirect(reverse_lazy('login'))
+
 
 class SignUpView(CreateView):
     form_class = UserCreationForm
@@ -285,3 +293,21 @@ def check_username(request):
         'is_taken': User.objects.filter(username__iexact=username).exists()
     }
     return JsonResponse(data)
+
+
+def user_status_api(request, chat_id):
+    try:
+        chat = Chat.objects.get(pk=chat_id)
+    except Chat.DoesNotExist:
+        print('Chat not found')
+        return JsonResponse({'error': 'Чат не знайдено'}, status=404)
+
+    chat_user_ids = chat.participants.values_list('id', flat=True)
+
+    statuses = UserStatus.objects.filter(user_id__in=chat_user_ids).select_related('user')
+
+    for status in statuses:
+        status.check_if_user_is_active()
+
+    user_statuses = [{'user_id': status.user.id, 'is_online': status.is_online} for status in statuses]
+    return JsonResponse(user_statuses, safe=False)

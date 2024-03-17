@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.http import JsonResponse
@@ -41,3 +42,21 @@ class UploadedFile(models.Model):
     file = models.FileField(verbose_name='Файл')
 
 
+class UserStatus(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    is_online = models.BooleanField(default=False)
+    last_activity = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username} {'Online' if self.is_online else 'Offline'}"
+
+    def check_if_user_is_active(self):
+        inactivity_timeout = timezone.timedelta(seconds=300)  # 5 хвилин
+        if self.last_activity and (timezone.now() - self.last_activity) > inactivity_timeout:
+            self.is_online = False
+            self.save(update_fields=['is_online'])
+            print("Статус користувача: ", self.user.username, " offline")
+        else:
+            self.is_online = True
+            self.save(update_fields=['is_online'])
+        return self.is_online

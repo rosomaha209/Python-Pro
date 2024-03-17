@@ -6,16 +6,19 @@ from django.core.signals import request_finished, request_started
 from django.db.models.signals import (m2m_changed, post_delete, post_save,
                                       pre_delete, pre_save)
 from django.dispatch import receiver
+from django.utils import timezone
 
-from .models import Chat, Message
+from .models import Chat, Message, UserStatus
 
 logger = logging.getLogger(__name__)
 
 
 @receiver(user_logged_in)
 def user_logged_in_handler(sender, request, user, **kwargs):
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_message = f"Користувач {user.username} увійшов у систему о {now}."
+    now_with_time_zone = timezone.now()
+    UserStatus.objects.update_or_create(user=user, defaults={'is_online': True, 'last_activity': now_with_time_zone})
+
+    log_message = f"Користувач {user.username} увійшов у систему о {now_with_time_zone}."
     logger.info(log_message)
     print(log_message)
 
@@ -23,6 +26,7 @@ def user_logged_in_handler(sender, request, user, **kwargs):
 @receiver(user_logged_out)
 def user_logged_out_handler(sender, request, user, **kwargs):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    UserStatus.objects.filter(user=user).update(is_online=False)
     log_message = f"Користувач {user.username} вийшов з системи о {now}."
     logger.info(log_message)
     print(log_message)

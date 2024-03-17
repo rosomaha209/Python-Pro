@@ -1,5 +1,6 @@
 
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,12 +8,14 @@
     <title>{% block title %}Messenger{% endblock %}</title>
     {% block extra_head %}
     {% endblock %}
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
 </head>
 <body>
     <header>
         <nav>
             <ul>
                 <li><a href="{% url 'login' %}">Логін</a></li>
+
                 <li><a href="{% url 'signup' %}">Реєстрація</a></li>
                 <li><a href="{% url 'chat_list' %}">Чати</a></li>
                 <li><a href="{% url 'user_permissions' %}">Дозволи користувачів</a></li>
@@ -21,6 +24,10 @@
                 <li><a href="{% url 'file_upload' %}">Завантажити</a></li>
                 <li><a href="{% url 'file_list' %}">Список файлів</a></li>
 
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-button">Вихід</button>
+                </form>
 
             </ul>
         </nav>

@@ -1,0 +1,9 @@
+.logout-button {
+        background: none!important;
+        border: none;
+        padding: 0!important;
+        color: black;
+        cursor: pointer;
+        margin-top: 5px;
+        font-weight: bold;
+    }

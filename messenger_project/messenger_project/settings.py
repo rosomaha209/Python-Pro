@@ -48,6 +48,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'messenger.middleware.RequestTimingMiddleware',
+    'messenger.middleware.UpdateLastActivityMiddleware',
 ]
 
 ROOT_URLCONF = 'messenger_project.urls'
@@ -126,3 +127,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
 # Вкажіть URL, за яким будуть доступні медіа-файли
 MEDIA_URL = ''
+
+SESSION_COOKIE_AGE = 1800  # 30 хвилин
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
