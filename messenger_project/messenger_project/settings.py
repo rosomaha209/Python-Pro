@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from pathlib import Path
 
+from celery import Celery
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -38,6 +40,7 @@ INSTALLED_APPS = [
     'messenger',
     'messenger_api',
     'rest_framework',
+    'celery',
 
 ]
 
@@ -82,7 +85,7 @@ DATABASES = {
         'NAME': 'messenger_database',
         'USER': 'postgres',
         'PASSWORD': '12345',
-        'HOST': 'localhost',
+        'HOST': 'db',
         'PORT': '5432',
     }
 }
@@ -138,3 +141,16 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ]
 }
+
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+
+app = Celery('messenger_project', broker=CELERY_BROKER_URL)
+
+app.conf.beat_schedule = {
+    'add-every-30-seconds': {
+        'task': 'messenger.tasks.add',
+        'schedule': 10.0,
+    },
+}
+app.conf.timezone = 'UTC'

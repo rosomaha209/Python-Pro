@@ -1,6 +1,8 @@
 from rest_framework import viewsets
+
+from messenger.models import Chat, Message
+
 from .serializers import ChatSerializer, MessageSerializer
-from messenger.models import Message, Chat
 
 
 class ChatViewSet(viewsets.ReadOnlyModelViewSet):

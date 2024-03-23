@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  flower:
+    image: mher/flower:latest
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+
+  redis:
+    image: "redis:alpine"
+
+  celery:
+    build: .
+    command: celery -A messenger_project worker --loglevel=info
+    volumes:
+      - .:/code
+    depends_on:
+      - web
+      - redis
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: messenger_database
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+
+

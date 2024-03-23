@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView, LogoutView
-from django.http import Http404, JsonResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views import View
@@ -17,7 +17,6 @@ from messenger.forms import (FileUploadForm, MessageForm, TextFileForm,
 from messenger.mixins import (AdminOrPermissionRequiredMixin,
                               UserCanEditMessageMixin, UserIsAuthorMixin)
 from messenger.models import Chat, Message, UploadedFile, User, UserStatus
-
 
 
 class ChatCreateView(AdminOrPermissionRequiredMixin, CreateView):

@@ -1,14 +1,12 @@
 from django.contrib.auth.decorators import login_required
 from django.urls import path
 
-
 from .views import (ChatAddParticipantView, ChatCreateView, ChatDeleteView,
                     ChatDetailView, ChatListView, ChatRemoveParticipantView,
                     CustomLoginView, CustomLogoutView, EditTextView,
                     FileListView, FileUploadView, MessageCreateView,
                     MessageDeleteView, MessageUpdateView, SignUpView,
                     UserPermissionView, check_username, user_status_api)
-
 
 urlpatterns = [
     path('login/', CustomLoginView.as_view(), name='login'),
