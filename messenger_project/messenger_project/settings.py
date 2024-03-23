@@ -36,6 +36,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'messenger',
+    'messenger_api',
+    'rest_framework',
 
 ]
 
@@ -130,3 +132,9 @@ MEDIA_URL = ''
 
 SESSION_COOKIE_AGE = 1800  # 30 хвилин
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ]
+}

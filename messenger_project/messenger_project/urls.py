@@ -27,4 +27,5 @@ urlpatterns = [
                   path('accounts/profile/', ProfileView.as_view(), name='user_profile'),
                   path('', ProfileView.as_view(), name='user_profile'),
                   path('messenger/', include('messenger.urls')),
+                  path('api/', include('messenger_api.urls')),
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
