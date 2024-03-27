@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from celery import Celery
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     'messenger_api',
     'rest_framework',
     'celery',
+    'django_celery_beat',
 
 ]
 
@@ -54,6 +56,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'messenger.middleware.RequestTimingMiddleware',
     'messenger.middleware.UpdateLastActivityMiddleware',
+
 ]
 
 ROOT_URLCONF = 'messenger_project.urls'
@@ -148,9 +151,14 @@ CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 app = Celery('messenger_project', broker=CELERY_BROKER_URL)
 
 app.conf.beat_schedule = {
-    'add-every-30-seconds': {
-        'task': 'messenger.tasks.add',
-        'schedule': 10.0,
+    # Ім'я задачі
+    'log-recent-messages-every-5-minutes': {
+        # Шлях до задачі
+        'task': 'myapp.tasks.log_recent_messages',
+        # Інтервал виконання
+        'schedule': timedelta(minutes=5),
+        # Аргументи задачі (якщо вони потрібні)
+        'args': (),
     },
 }
 app.conf.timezone = 'UTC'

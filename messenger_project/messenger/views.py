@@ -17,7 +17,6 @@ from messenger.forms import (FileUploadForm, MessageForm, TextFileForm,
 from messenger.mixins import (AdminOrPermissionRequiredMixin,
                               UserCanEditMessageMixin, UserIsAuthorMixin)
 from messenger.models import Chat, Message, UploadedFile, User, UserStatus
-from messenger.tasks import add, task
 
 
 class ChatCreateView(AdminOrPermissionRequiredMixin, CreateView):
@@ -28,8 +27,6 @@ class ChatCreateView(AdminOrPermissionRequiredMixin, CreateView):
     permission_required = 'messenger.can_create_chat'
 
     def form_valid(self, form):
-        result = add.delay(4, 4)
-        print('Task Result:', result.get(), task)
         response = super().form_valid(form)
         messages.success(self.request, 'Чат було успішно створено.')
         return response
