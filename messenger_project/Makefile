@@ -46,4 +46,7 @@ migrate:
 shell:
 	$(DC) run --rm web python manage.py shell
 
+createsuperuser:
+	$(DC) run --rm web python manage.py createsuperuser
+
 
