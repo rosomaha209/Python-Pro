@@ -1,0 +1,1 @@
+$(document).ready((function(){$("#id_username").blur((function(){var a=$(this).val();$.ajax({url:checkUsernameURL,data:{username:a},dataType:"json",success:function(a){a.is_taken||alert("Користувач з таким іменем не зареєстрований.")}})}))}));
