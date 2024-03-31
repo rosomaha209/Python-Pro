@@ -49,4 +49,5 @@ shell:
 createsuperuser:
 	$(DC) run --rm web python manage.py createsuperuser
 
-
+test:
+	$(DC) run --rm web python manage.py test

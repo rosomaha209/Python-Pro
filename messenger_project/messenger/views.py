@@ -310,3 +310,5 @@ def user_status_api(request, chat_id):
 
     user_statuses = [{'user_id': status.user.id, 'is_online': status.is_online} for status in statuses]
     return JsonResponse(user_statuses, safe=False)
+
+
