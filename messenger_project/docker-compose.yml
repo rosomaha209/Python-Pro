@@ -21,7 +21,8 @@ services:
       - "8000:8000"
     depends_on:
       - redis
-
+    environment:
+      - DJANGO_SETTINGS_MODULE=messenger_project.settings_docker
   redis:
     image: "redis:alpine"
 
@@ -33,6 +34,8 @@ services:
     depends_on:
       - web
       - redis
+
+
   celery-beat:
     build: .
     command: celery -A messenger_project beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
@@ -41,6 +44,8 @@ services:
     depends_on:
       - web
       - redis
+    environment:
+      - DJANGO_SETTINGS_MODULE=messenger_project.settings_docker
   db:
     image: postgres
     environment:
