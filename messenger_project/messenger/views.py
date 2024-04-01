@@ -69,11 +69,13 @@ class ChatDetailView(LoginRequiredMixin, DetailView):
         return context
 
     def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
         form = MessageForm(request.POST)
         if form.is_valid():
             message = form.save(commit=False)
             message.author = request.user
             message.chat = self.get_object()
+            message.chat = self.object
             message.to_superuser = message.chat.participants.filter(is_superuser=True).exists()
             message.save()
 
@@ -159,7 +161,7 @@ class MessageCreateView(CreateView):
         return response
 
     def get_success_url(self):
-        return reverse_lazy('chat_detail', kwargs={'chat_id': self.kwargs['chat_id']})
+        return reverse_lazy('chat_detail', kwargs={'pk': self.kwargs['chat_id']})
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):

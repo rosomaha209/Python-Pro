@@ -51,3 +51,6 @@ createsuperuser:
 
 test:
 	$(DC) run --rm web python manage.py test
+
+up_build:
+	$(DC) up -d --build

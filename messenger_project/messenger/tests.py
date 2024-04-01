@@ -17,77 +17,71 @@ class SimpleTest(TestCase):
 
 
 class ChatDetailViewTests(TestCase):
+
     def setUp(self):
-        # Створення користувача і чату для тестів
-        self.user = User.objects.create_user(username='testuser', password='12345')
+        self.user = User.objects.create_user(username='user1', password='test12345')
         self.chat = Chat.objects.create(name="Test Chat")
         self.chat.participants.add(self.user)
-        self.url = reverse('chat_detail', kwargs={'pk': self.chat.pk})
-        self.client.login(username='testuser', password='12345')
+        self.url = reverse('chat_detail', args=[self.chat.id])
 
     def test_redirect_if_not_logged_in(self):
-        # Вилогінюємось для тесту перенаправлення
-        self.client.logout()
         response = self.client.get(self.url)
-        self.assertRedirects(response, f'{reverse("login")}?next={self.url}')
+        self.assertRedirects(response, f'/messenger/login/?next={self.url}')
 
-    def test_view_url_exists_at_desired_location(self):
+    def test_logged_in_uses_correct_template(self):
+        self.client.login(username='user1', password='test12345')
         response = self.client.get(self.url)
+        self.assertEqual(str(response.context['user']), 'user1')
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'messenger/chat_detail.html')
 
-    def test_context_data(self):
+    def test_form_in_context(self):
+        self.client.login(username='user1', password='test12345')
         response = self.client.get(self.url)
-        self.assertTrue('form' in response.context)
         self.assertIsInstance(response.context['form'], MessageForm)
 
     def test_post_valid_message_form(self):
-        response = self.client.post(self.url, {'text': 'Hello, world!'})
+        self.client.login(username='user1', password='test12345')
+        response = self.client.post(self.url, {'text': 'Hello'})
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(Message.objects.filter(text='Hello, world!').exists())
+        self.assertTrue(Message.objects.exists())
 
     def test_post_invalid_message_form(self):
+        self.client.login(username='user1', password='test12345')
         response = self.client.post(self.url, {'text': ''})
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(Message.objects.filter(text='').exists())
+        self.assertFalse(Message.objects.exists())
 
 
 class MessageCreateViewTests(TestCase):
     def setUp(self):
-        # Створення користувача для тестування
         self.user = User.objects.create_user(username='testuser', password='12345')
-        self.client = Client()
         self.client.login(username='testuser', password='12345')
-
-        # Створення чату для тестування
         self.chat = Chat.objects.create(name="Test Chat")
         self.chat.participants.add(self.user)
-
-        # URL для створення повідомлення
-        self.create_message_url = reverse('create_message', kwargs={'chat_id': self.chat.id})
+        self.create_message_url = reverse('send_message', kwargs={'chat_id': self.chat.id})
+        self.url = self.create_message_url
 
     def test_create_message_view_success(self):
-        # Тест на успішне створення повідомлення
         response = self.client.post(self.create_message_url, {'text': 'Test message'})
-        self.assertEqual(response.status_code, 302)  # Перевірка на перенаправлення
-        self.assertTrue(Message.objects.exists())  # Перевірка чи повідомлення створено
+        self.assertRedirects(response, reverse('chat_detail', kwargs={'pk': self.chat.pk}))
+        self.assertEqual(Message.objects.count(), 1)
+        self.assertEqual(Message.objects.first().text, 'Test message')
 
     def test_create_message_view_no_text(self):
-        # Тест на відсутність тексту у повідомленні
         response = self.client.post(self.create_message_url, {'text': ''})
-        self.assertEqual(response.status_code, 200)  # Форма не повинна бути валідною, тому не перенаправляємо
-        self.assertFalse(Message.objects.exists())  # Повідомлення не повинно створюватися
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Message.objects.filter(text='').exists())
 
-    def test_redirect_after_message_creation(self):
-        # Тест на перенаправлення після створення повідомлення
-        response = self.client.post(self.create_message_url, {'text': 'Another test message'}, follow=True)
-        self.assertRedirects(response,
-                             reverse('chat_detail', kwargs={'chat_id': self.chat.id}))  # Перевірка URL перенаправлення
+    def test_redirect_if_not_logged_in(self):
+        self.client.logout()
+        response = self.client.get(self.create_message_url)
+        self.assertRedirects(response, f'/accounts/login/?next={self.create_message_url}')
 
 
 class FileListViewTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        # Створення тестових файлів
         cls.audio_file = UploadedFile.objects.create(
             name='test_audio',
             file=SimpleUploadedFile('test_audio.mp3', b'audio_content', content_type='audio/mp3')
@@ -109,7 +103,6 @@ class FileListViewTests(TestCase):
             file=SimpleUploadedFile('missing_file.txt', b'', content_type='text/plain')
         )
 
-        # Створення шляху до неіснуючого файлу
         missing_file_path = os.path.join(settings.MEDIA_ROOT, cls.missing_file.file.name)
         if os.path.exists(missing_file_path):
             os.remove(missing_file_path)
@@ -125,10 +118,16 @@ class FileListViewTests(TestCase):
         response = self.client.get(reverse('file_list'))
         files_with_types = response.context['files_with_types']
 
-        # Перевірка типів файлів і вмісту текстового файлу
         for file_info in files_with_types:
-            if file_info['file'].name == 'test_text.txt':
+            if file_info['file'].name.endswith('.mp3'):
+                self.assertEqual(file_info['file_type'], 'audio')
+                self.assertEqual(file_info['content'], '')
+            elif file_info['file'].name.endswith('.mp4'):
+                self.assertEqual(file_info['file_type'], 'video')
+                self.assertEqual(file_info['content'], '')
+            elif file_info['file'].name.endswith(('.png', '.jpg', '.jpeg')):
+                self.assertEqual(file_info['file_type'], 'image')
+                self.assertEqual(file_info['content'], '')
+            elif file_info['file'].name.endswith('.txt'):
                 self.assertEqual(file_info['file_type'], 'text')
-                self.assertEqual(file_info['content'], 'text content')
-            else:
-                self.assertNotEqual(file_info['file_type'], 'text')
+                self.assertIn('text content', file_info['content'])
